@@ -1,7 +1,11 @@
 streamlit
 pandas
 faiss-cpu
-sentence-transformers
-google-generativeai
+sentence-transformers 
 python-dotenv
 pyarrow
+google-generativeai
+nltk
+rouge-score
+flask
+flask-cors

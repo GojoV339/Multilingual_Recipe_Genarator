@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍳 Recipe Generator - AI Powered</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+        </div>
+        <!-- Food decoration elements -->
+        <div class="food-decorations">
+            <span class="food-icon">🍕</span>
+            <span class="food-icon">🍔</span>
+            <span class="food-icon">🍜</span>
+            <span class="food-icon">🥘</span>
+            <span class="food-icon">🍰</span>
+            <span class="food-icon">🍝</span>
+        </div>
+    </div>
+
+    <!-- Floating Food Items -->
+    <div class="floating-foods">
+        <!-- Right side foods -->
+        <div class="floating-food" data-food="🍛">🍛</div>
+        <div class="floating-food" data-food="🍗">🍗</div>
+        <div class="floating-food" data-food="🥘">🥘</div>
+        <div class="floating-food" data-food="🍜">🍜</div>
+        <div class="floating-food" data-food="🍕">🍕</div>
+        <div class="floating-food" data-food="🍔">🍔</div>
+        <div class="floating-food" data-food="🌮">🌮</div>
+        <div class="floating-food" data-food="🍝">🍝</div>
+        <div class="floating-food" data-food="🍰">🍰</div>
+        <div class="floating-food" data-food="🍱">🍱</div>
+        <div class="floating-food" data-food="🥟">🥟</div>
+        <div class="floating-food" data-food="🍲">🍲</div>
+        <!-- Left side foods -->
+        <div class="floating-food left-side" data-food="🍛">🍛</div>
+        <div class="floating-food left-side" data-food="🍗">🍗</div>
+        <div class="floating-food left-side" data-food="🥘">🥘</div>
+        <div class="floating-food left-side" data-food="🍜">🍜</div>
+        <div class="floating-food left-side" data-food="🍕">🍕</div>
+        <div class="floating-food left-side" data-food="🍔">🍔</div>
+        <div class="floating-food left-side" data-food="🌮">🌮</div>
+        <div class="floating-food left-side" data-food="🍝">🍝</div>
+        <div class="floating-food left-side" data-food="🍰">🍰</div>
+        <div class="floating-food left-side" data-food="🍱">🍱</div>
+        <div class="floating-food left-side" data-food="🥟">🥟</div>
+        <div class="floating-food left-side" data-food="🍲">🍲</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-3d">🍳</div>
+                <h1 class="title">Recipe Generator</h1>
+                <p class="subtitle">AI-Powered Recipe Discovery & Translation</p>
+            </div>
+        </header>
+
+        <!-- Main Card -->
+        <div class="main-card">
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-mode-toggle">
+                    <button class="mode-btn active" data-mode="name">
+                        <span class="icon">📝</span>
+                        <span>Recipe Name</span>
+                    </button>
+                    <button class="mode-btn" data-mode="ingredients">
+                        <span class="icon">🥘</span>
+                        <span>My Ingredients</span>
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="text" id="queryInput" class="search-input" 
+                               placeholder="e.g., Chicken Biryani or Dosa">
+                        <div class="input-glow"></div>
+                    </div>
+                </div>
+
+                <div class="options-row">
+                    <div class="select-wrapper">
+                        <select id="languageSelect" class="custom-select">
+                            <option value="Telugu">Telugu (తెలుగు)</option>
+                            <option value="Hindi">Hindi (हिंदी)</option>
+                            <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+                            <option value="Malayalam">Malayalam (മലയാളം)</option>
+                            <option value="Tamil">Tamil (தமிழ்)</option>
+                            <option value="Bengali">Bengali (বাংলা)</option>
+                            <option value="Gujarati">Gujarati (ગુજરાતી)</option>
+                            <option value="Marathi">Marathi (मराठी)</option>
+                            <option value="Punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
+                            <option value="Odia">Odia (ଓଡ଼ିଆ)</option>
+                            <option value="Assamese">Assamese (অসমীয়া)</option>
+                            <option value="Urdu">Urdu (اردو)</option>
+                        </select>
+                        <div class="select-arrow">▼</div>
+                    </div>
+
+                    <button type="button" id="internetSearchBtn" class="internet-search-btn">
+                        <span class="btn-icon">🌐</span>
+                        <span class="btn-text">Search Internet</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+
+                <button id="searchBtn" class="search-button">
+                    <span class="button-text">Get Recipe</span>
+                    <span class="button-loader"></span>
+                    <div class="button-shine"></div>
+                </button>
+            </div>
+
+            <!-- Evaluation Section -->
+            <div class="evaluation-section">
+                <div class="eval-toggle">
+                    <input type="checkbox" id="enableEval" class="toggle-input">
+                    <label for="enableEval" class="toggle-label">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">📊 Enable Model Evaluation</span>
+                    </label>
+                </div>
+
+                <div id="evalOptions" class="eval-options">
+                    <input type="text" id="modelName" class="eval-input" 
+                           placeholder="Model Name (e.g., gemini-2.5-flash)" value="gemini-2.5-flash">
+                    <textarea id="referenceText" class="eval-textarea" 
+                              placeholder="Reference Text (Optional)"></textarea>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="results-section" style="display: none;">
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2 class="result-title">Your Recipe</h2>
+                        <button class="close-btn" id="closeResults">×</button>
+                    </div>
+                    <div id="recipeContent" class="recipe-content"></div>
+                    
+                    <!-- Metrics Display -->
+                    <div id="metricsDisplay" class="metrics-display" style="display: none;">
+                        <h3 class="metrics-title">📊 Evaluation Metrics</h3>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-icon">📈</div>
+                                <div class="metric-label">BLEU Score</div>
+                                <div class="metric-value" id="bleuScore">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">📊</div>
+                                <div class="metric-label">ROUGE-L F1</div>
+                                <div class="metric-value" id="rougeScore">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">🔗</div>
+                                <div class="metric-label">Semantic Similarity</div>
+                                <div class="metric-value" id="semanticScore">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon">⭐</div>
+                                <div class="metric-label">Overall Score</div>
+                                <div class="metric-value" id="overallScore">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <div class="loader-text">Cooking up your recipe...</div>
+                    <div class="loader-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by AI • 2.2M Recipe Database • Multi-Language Support</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="particles.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

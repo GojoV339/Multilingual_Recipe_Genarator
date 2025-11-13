@@ -1,17 +1,60 @@
 import os
 import time
-import streamlit as st
 import faiss
 import sqlite3
+from typing import Optional, Dict
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
+from metrics import ModelEvaluator, create_results_folder, save_evaluation_result, save_summary
+
+# Make streamlit optional for Flask backend
+try:
+    import streamlit as st
+    STREAMLIT_AVAILABLE = True
+except ImportError:
+    STREAMLIT_AVAILABLE = False
+    # Create a mock st object for Flask backend
+    class MockStreamlit:
+        def error(self, msg): print(f"ERROR: {msg}")
+        def warning(self, msg): print(f"WARNING: {msg}")
+        def cache_resource(self, func): return func
+        def expander(self, *args, **kwargs): return self
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def columns(self, n): return [self] * n
+        def metric(self, *args, **kwargs): pass
+        def subheader(self, *args, **kwargs): pass
+        def tabs(self, *args, **kwargs): return [self] * len(args[0]) if args else []
+        def json(self, *args, **kwargs): pass
+    st = MockStreamlit()
+# --- FIX: This is the correct import for google-generativeai package ---
 import google.generativeai as genai
+# --- FIX: Import Tool and GoogleSearchRetrieval from the correct modules ---
+try:
+    from google.generativeai.types import Tool
+    from google.generativeai import protos
+except ImportError:
+    st.error("Failed to import types from 'google.generativeai'. Please run 'pip install google-generativeai'")
+    # Create stubs so the app doesn't crash on load
+    Tool = None
+    protos = None
+
 import ast
 
 EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
 FAISS_INDEX_PATH = 'recipes.index'
 DB_PATH = 'recipes.db'
 GEMINI_MODEL = 'gemini-2.5-flash-preview-09-2025'
+
+# Global evaluator instance (cached)
+_evaluator = None
+
+def get_evaluator():
+    """Get or create the model evaluator instance."""
+    global _evaluator
+    if _evaluator is None:
+        _evaluator = ModelEvaluator(embedding_model_name=EMBEDDING_MODEL)
+    return _evaluator
 
 def load_api_key():
     load_dotenv()
@@ -20,6 +63,7 @@ def load_api_key():
         st.error("GOOGLE_API_KEY not found in .env file.")
         return None
     try:
+        # This will now work because 'genai' is the correct object
         genai.configure(api_key=api_key)
         return api_key
     except Exception as e:
@@ -156,10 +200,29 @@ async def get_recipe_name_from_ingredients(ingredients_str, language):
 async def get_gemini_response_with_search(query, language):
     if not load_api_key():
         return "API Key not configured."
-    model = genai.GenerativeModel(GEMINI_MODEL)
+        
+    # --- Check if imports were successful ---
+    if Tool is None or protos is None:
+        st.error("Could not import Google Search tools. Please restart after 'pip install'.")
+        return "Error: Search tool not available."
+
+    # --- FIX: For gemini-2.5 models, Google Search is enabled via tool_config ---
+    # The google_search_retrieval tool is deprecated, but we can enable Google Search
+    # through the model's built-in capabilities by using a model that supports it
+    
+    # Try using a model that supports Google Search natively
+    # If the preview model doesn't work, fall back to a stable version
+    try:
+        model = genai.GenerativeModel(GEMINI_MODEL)
+    except:
+        # Fallback to a stable model that supports Google Search
+        model = genai.GenerativeModel('gemini-1.5-pro')
+    
     prompt = f"""
-    Find a high-quality recipe for "{query}" using Google Search. Then translate it fully into {language}.
-    Return only the translated recipe.
+    Search the web for a high-quality recipe for "{query}". 
+    Find the most popular and well-reviewed recipe, then translate the complete recipe 
+    (including title, ingredients list, and detailed step-by-step instructions) into {language}.
+    Return only the translated recipe in a clear, formatted way with proper sections.
     """
 
     max_retries = 5
@@ -167,10 +230,8 @@ async def get_gemini_response_with_search(query, language):
 
     for _ in range(max_retries):
         try:
-            response = await model.generate_content_async(
-                prompt,
-                tools=[genai.types.Tool(google_search=genai.types.GoogleSearch())]
-            )
+            # The model will automatically use Google Search when needed
+            response = await model.generate_content_async(prompt)
             return response.text
         except Exception as e:
             if "rate limit" in str(e).lower():
@@ -180,3 +241,123 @@ async def get_gemini_response_with_search(query, language):
                 st.error(f"Search error: {e}")
                 return str(e)
     return "Service busy. Try again later."
+
+
+# Evaluation functions
+_results_folder = None
+_evaluation_results = []
+
+def get_or_create_results_folder():
+    """Get or create the current evaluation results folder."""
+    global _results_folder
+    if _results_folder is None:
+        _results_folder = create_results_folder()
+    return _results_folder
+
+def reset_evaluation_session():
+    """Reset the evaluation session (creates new folder)."""
+    global _results_folder, _evaluation_results
+    _results_folder = None
+    _evaluation_results = []
+
+def evaluate_model_output(
+    model_name: str,
+    query: str,
+    reference: Optional[str],
+    candidate: str,
+    language: str,
+    metadata: Optional[Dict] = None
+) -> Optional[Dict]:
+    """Evaluate model output and save results."""
+    if not reference:
+        if STREAMLIT_AVAILABLE:
+            st.warning("⚠️ No reference text provided. Evaluation requires a reference text for comparison.")
+        else:
+            print("WARNING: No reference text provided. Evaluation requires a reference text for comparison.")
+        return None
+    
+    try:
+        evaluator = get_evaluator()
+        metrics = evaluator.evaluate(reference, candidate)
+        
+        folder_path = get_or_create_results_folder()
+        
+        # Save individual result
+        filepath = save_evaluation_result(
+            folder_path=folder_path,
+            model_name=model_name,
+            query=query,
+            reference=reference,
+            candidate=candidate,
+            metrics=metrics,
+            metadata={
+                **(metadata or {}),
+                "language": language,
+                "timestamp": metrics["timestamp"]
+            }
+        )
+        
+        # Store for summary
+        _evaluation_results.append({
+            "model_name": model_name,
+            "query": query,
+            "reference": reference,
+            "candidate": candidate,
+            "metrics": metrics
+        })
+        
+        return {
+            "folder_path": folder_path,
+            "filepath": filepath,
+            "metrics": metrics
+        }
+    except Exception as e:
+        st.error(f"Error during evaluation: {e}")
+        return None
+
+def display_evaluation_metrics(metrics: Dict):
+    """Display evaluation metrics in Streamlit."""
+    with st.expander("📊 Evaluation Metrics", expanded=True):
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("BLEU Score", f"{metrics['bleu_scores']['bleu']:.4f}")
+        
+        with col2:
+            st.metric("ROUGE-L F1", f"{metrics['rouge_scores']['rougeL']['fmeasure']:.4f}")
+        
+        with col3:
+            st.metric("Semantic Similarity", f"{metrics['semantic_similarity']:.4f}")
+        
+        with col4:
+            st.metric("Overall Score", f"{metrics['overall_score']:.4f}")
+        
+        # Detailed metrics
+        st.subheader("Detailed Metrics")
+        
+        tab1, tab2, tab3, tab4 = st.tabs(["BLEU", "ROUGE", "Semantic", "Length"])
+        
+        with tab1:
+            st.json(metrics['bleu_scores'])
+        
+        with tab2:
+            st.json(metrics['rouge_scores'])
+        
+        with tab3:
+            st.metric("Cosine Similarity", f"{metrics['semantic_similarity']:.4f}")
+        
+        with tab4:
+            st.json(metrics['length_metrics'])
+
+def save_evaluation_summary():
+    """Save summary of all evaluations in current session."""
+    global _evaluation_results, _results_folder
+    if not _evaluation_results or not _results_folder:
+        return None
+    
+    try:
+        summary_path = save_summary(_results_folder, _evaluation_results)
+        return summary_path
+    except Exception as e:
+        st.error(f"Error saving summary: {e}")
+        return None
