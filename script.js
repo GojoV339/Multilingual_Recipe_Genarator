@@ -17,8 +17,14 @@ const evalOptions = document.getElementById('evalOptions');
 const modelNameInput = document.getElementById('modelName');
 const referenceTextInput = document.getElementById('referenceText');
 const metricsDisplay = document.getElementById('metricsDisplay');
+const providerSelect = document.getElementById('providerSelect');
+const modelSelect = document.getElementById('modelSelect');
 
 let currentMode = 'name';
+let availableModels = {
+    gemini: ['gemini-2.5-flash-preview-09-2025', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+    groq: []
+};
 
 // Advanced UI Enhancements
 const addAdvancedInteractions = () => {
@@ -99,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updatePlaceholder();
     addAdvancedInteractions();
+    loadAvailableModels();
     
     // Add entrance animations
     const elements = document.querySelectorAll('.main-card, .header');
@@ -106,6 +113,42 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.animationDelay = `${index * 0.2}s`;
     });
 });
+
+// Load available models from API
+async function loadAvailableModels() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/models`);
+        if (response.ok) {
+            const data = await response.json();
+            availableModels = data.providers;
+            updateModelDropdown();
+        }
+    } catch (error) {
+        console.error('Failed to load models:', error);
+    }
+}
+
+// Update model dropdown based on selected provider
+function updateModelDropdown() {
+    const provider = providerSelect.value;
+    const models = availableModels[provider] || [];
+    
+    // Clear existing options
+    modelSelect.innerHTML = '';
+    
+    // Add new options
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        modelSelect.appendChild(option);
+    });
+    
+    // Set default selection
+    if (models.length > 0) {
+        modelSelect.value = models[0];
+    }
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -132,6 +175,10 @@ function setupEventListeners() {
     // Close results
     closeResultsBtn.addEventListener('click', () => {
         resultsSection.style.display = 'none';
+        recipeContent.innerHTML = '';
+        metricsDisplay.style.display = 'none';
+        // Scroll back to top of page smoothly
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Internet search button toggle
@@ -147,6 +194,11 @@ function setupEventListeners() {
         } else {
             evalOptions.classList.remove('show');
         }
+    });
+
+    // Provider change - update model dropdown
+    providerSelect.addEventListener('change', () => {
+        updateModelDropdown();
     });
 }
 
@@ -171,9 +223,16 @@ async function handleSearch() {
     const language = languageSelect.value;
     const useInternet = internetSearchEnabled;
     const enableEval = enableEvalCheckbox.checked;
-    const modelName = modelNameInput.value.trim() || 'gemini-2.5-flash';
+    const provider = providerSelect.value;
+    const modelName = modelSelect.value;
+    const evalModelName = modelNameInput.value.trim() || `${provider}:${modelName}`;
     const referenceText = referenceTextInput.value.trim();
 
+    // Hide previous results and clear content
+    resultsSection.style.display = 'none';
+    recipeContent.innerHTML = '';
+    metricsDisplay.style.display = 'none';
+    
     // Show loading
     showLoading(true);
     searchBtn.classList.add('loading');
@@ -183,22 +242,22 @@ async function handleSearch() {
         
         if (searchMode === 'ingredients') {
             // First get recipe name from ingredients
-            const recipeName = await getRecipeNameFromIngredients(query, language);
+            const recipeName = await getRecipeNameFromIngredients(query, language, provider, modelName);
             if (!recipeName) {
                 throw new Error('Could not determine recipe from ingredients');
             }
             showToast(`Searching for: ${recipeName}`, 'success');
             
             if (useInternet) {
-                response = await searchInternet(recipeName, language, enableEval, modelName, referenceText);
+                response = await searchInternet(recipeName, language, enableEval, provider, modelName, evalModelName, referenceText);
             } else {
-                response = await searchDatabase(recipeName, language, enableEval, modelName, referenceText);
+                response = await searchDatabase(recipeName, language, enableEval, provider, modelName, evalModelName, referenceText);
             }
         } else {
             if (useInternet) {
-                response = await searchInternet(query, language, enableEval, modelName, referenceText);
+                response = await searchInternet(query, language, enableEval, provider, modelName, evalModelName, referenceText);
             } else {
-                response = await searchDatabase(query, language, enableEval, modelName, referenceText);
+                response = await searchDatabase(query, language, enableEval, provider, modelName, evalModelName, referenceText);
             }
         }
 
@@ -215,7 +274,7 @@ async function handleSearch() {
 }
 
 // API Calls
-async function getRecipeNameFromIngredients(ingredients, language) {
+async function getRecipeNameFromIngredients(ingredients, language, provider, modelName) {
     const response = await fetch(`${API_BASE_URL}/recipe-name`, {
         method: 'POST',
         headers: {
@@ -223,7 +282,9 @@ async function getRecipeNameFromIngredients(ingredients, language) {
         },
         body: JSON.stringify({
             ingredients,
-            language
+            language,
+            provider,
+            model_name: modelName
         })
     });
 
@@ -235,7 +296,7 @@ async function getRecipeNameFromIngredients(ingredients, language) {
     return data.recipe_name;
 }
 
-async function searchInternet(query, language, enableEval, modelName, referenceText) {
+async function searchInternet(query, language, enableEval, provider, modelName, evalModelName, referenceText) {
     const response = await fetch(`${API_BASE_URL}/search-internet`, {
         method: 'POST',
         headers: {
@@ -245,6 +306,7 @@ async function searchInternet(query, language, enableEval, modelName, referenceT
             query,
             language,
             enable_evaluation: enableEval,
+            provider,
             model_name: modelName,
             reference_text: referenceText
         })
@@ -258,7 +320,7 @@ async function searchInternet(query, language, enableEval, modelName, referenceT
     return await response.json();
 }
 
-async function searchDatabase(query, language, enableEval, modelName, referenceText) {
+async function searchDatabase(query, language, enableEval, provider, modelName, evalModelName, referenceText) {
     const response = await fetch(`${API_BASE_URL}/search-database`, {
         method: 'POST',
         headers: {
@@ -268,6 +330,7 @@ async function searchDatabase(query, language, enableEval, modelName, referenceT
             query,
             language,
             enable_evaluation: enableEval,
+            provider,
             model_name: modelName,
             reference_text: referenceText
         })
@@ -287,8 +350,10 @@ function displayRecipe(recipeText, metrics = null) {
     recipeContent.innerHTML = formatRecipeText(recipeText);
     resultsSection.style.display = 'block';
     
-    // Scroll to results
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Scroll to results smoothly, but ensure the search section is still visible
+    setTimeout(() => {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 
     // Display metrics if available
     if (metrics) {

@@ -40,11 +40,42 @@ except ImportError:
     protos = None
 
 import ast
+import requests
+from bs4 import BeautifulSoup
+
+# Try to import Groq
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+    Groq = None
 
 EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
 FAISS_INDEX_PATH = 'recipes.index'
 DB_PATH = 'recipes.db'
 GEMINI_MODEL = 'gemini-2.5-flash-preview-09-2025'
+
+# Available Groq models
+GROQ_MODELS = [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'llama-3.1-70b-versatile',
+    'llama-3.1-405b-reasoning',
+    'llama-3.2-90b-vision-preview',
+    'llama-3.2-11b-vision-preview',
+    'llama-3.2-3b-instruct',
+    'llama-3.2-1b-instruct',
+    'mixtral-8x7b-32768',
+    'gemma-7b-it',
+    'gemma2-9b-it',
+    'deepseek-r1-distill-llama-70b',
+    'qwen/qwen3-32b',
+    'moonshotai/kimi-k2-instruct',
+]
+
+# Default Groq model
+DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 # Global evaluator instance (cached)
 _evaluator = None
@@ -60,14 +91,46 @@ def load_api_key():
     load_dotenv()
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        st.error("GOOGLE_API_KEY not found in .env file.")
+        if STREAMLIT_AVAILABLE:
+            st.error("GOOGLE_API_KEY not found in .env file.")
+        else:
+            print("WARNING: GOOGLE_API_KEY not found in .env file.")
         return None
     try:
         # This will now work because 'genai' is the correct object
         genai.configure(api_key=api_key)
         return api_key
     except Exception as e:
-        st.error(f"Error configuring Gemini API: {e}")
+        if STREAMLIT_AVAILABLE:
+            st.error(f"Error configuring Gemini API: {e}")
+        else:
+            print(f"ERROR: Error configuring Gemini API: {e}")
+        return None
+
+def load_groq_api_key():
+    """Load and configure Groq API key."""
+    load_dotenv()
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        if STREAMLIT_AVAILABLE:
+            st.error("GROQ_API_KEY not found in .env file.")
+        else:
+            print("WARNING: GROQ_API_KEY not found in .env file.")
+        return None
+    if not GROQ_AVAILABLE:
+        if STREAMLIT_AVAILABLE:
+            st.error("Groq package not installed. Run: pip install groq")
+        else:
+            print("ERROR: Groq package not installed. Run: pip install groq")
+        return None
+    try:
+        client = Groq(api_key=api_key)
+        return client
+    except Exception as e:
+        if STREAMLIT_AVAILABLE:
+            st.error(f"Error configuring Groq API: {e}")
+        else:
+            print(f"ERROR: Error configuring Groq API: {e}")
         return None
 
 @st.cache_resource
@@ -203,7 +266,10 @@ async def get_gemini_response_with_search(query, language):
         
     # --- Check if imports were successful ---
     if Tool is None or protos is None:
-        st.error("Could not import Google Search tools. Please restart after 'pip install'.")
+        if STREAMLIT_AVAILABLE:
+            st.error("Could not import Google Search tools. Please restart after 'pip install'.")
+        else:
+            print("ERROR: Could not import Google Search tools.")
         return "Error: Search tool not available."
 
     # --- FIX: For gemini-2.5 models, Google Search is enabled via tool_config ---
@@ -238,7 +304,142 @@ async def get_gemini_response_with_search(query, language):
                 time.sleep(delay)
                 delay *= 2
             else:
-                st.error(f"Search error: {e}")
+                if STREAMLIT_AVAILABLE:
+                    st.error(f"Search error: {e}")
+                else:
+                    print(f"ERROR: Search error: {e}")
+                return str(e)
+    return "Service busy. Try again later."
+
+async def get_groq_translation(prompt, model_name=DEFAULT_GROQ_MODEL):
+    """Get translation from Groq API."""
+    client = load_groq_api_key()
+    if not client:
+        return "Groq API Key not configured."
+    
+    max_retries = 5
+    delay = 2
+    
+    for _ in range(max_retries):
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                model=model_name,
+                temperature=0.7,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            if "rate limit" in str(e).lower() or "429" in str(e):
+                time.sleep(delay)
+                delay *= 2
+            else:
+                if STREAMLIT_AVAILABLE:
+                    st.error(f"Groq API error: {e}")
+                else:
+                    print(f"ERROR: Groq API error: {e}")
+                return str(e)
+    return "Service busy. Try again later."
+
+async def get_recipe_name_from_ingredients_groq(ingredients_str, language, model_name=DEFAULT_GROQ_MODEL):
+    """Get recipe name from ingredients using Groq."""
+    client = load_groq_api_key()
+    if not client:
+        return "Groq API Key not configured."
+    
+    prompt = f"""
+    A user has the following ingredients:
+    "{ingredients_str}"
+    Return only the recipe name they can make.
+    If ingredients are in {language}, return a common English recipe name.
+    User: "{ingredients_str}"
+    You:
+    """
+    
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            model=model_name,
+            temperature=0.7,
+        )
+        return chat_completion.choices[0].message.content.strip().replace('"', '')
+    except Exception as e:
+        if STREAMLIT_AVAILABLE:
+            st.error(f"Error getting recipe name from Groq: {e}")
+        else:
+            print(f"ERROR: Error getting recipe name from Groq: {e}")
+        return None
+
+def search_web_for_recipe(query):
+    """Search the web for a recipe and return text content."""
+    try:
+        # Use DuckDuckGo or Google search via requests
+        search_url = f"https://html.duckduckgo.com/html/?q={query} recipe"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(search_url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Extract text from search results
+        results = soup.find_all(['p', 'div'], class_=lambda x: x and 'result' in x.lower())
+        text_content = ' '.join([r.get_text() for r in results[:5]])
+        
+        if not text_content:
+            # Fallback: return a simple description
+            return f"Recipe information for {query}"
+        
+        return text_content[:2000]  # Limit content length
+    except Exception as e:
+        print(f"Web search error: {e}")
+        return f"Recipe information for {query}"
+
+async def get_groq_response_with_search(query, language, model_name=DEFAULT_GROQ_MODEL):
+    """Get recipe from internet using Groq with web search."""
+    client = load_groq_api_key()
+    if not client:
+        return "Groq API Key not configured."
+    
+    # First, try to get web content
+    web_content = search_web_for_recipe(query)
+    
+    prompt = f"""
+    Based on the following web search results and your knowledge, provide a high-quality recipe for "{query}".
+    
+    Web search results:
+    {web_content}
+    
+    Please provide a complete recipe (including title, ingredients list, and detailed step-by-step instructions) translated into {language}.
+    If the web search results don't contain enough information, use your knowledge to provide a good recipe.
+    Return only the translated recipe in a clear, formatted way with proper sections.
+    """
+    
+    max_retries = 5
+    delay = 2
+    
+    for _ in range(max_retries):
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                model=model_name,
+                temperature=0.7,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            if "rate limit" in str(e).lower() or "429" in str(e):
+                time.sleep(delay)
+                delay *= 2
+            else:
+                if STREAMLIT_AVAILABLE:
+                    st.error(f"Groq search error: {e}")
+                else:
+                    print(f"ERROR: Groq search error: {e}")
                 return str(e)
     return "Service busy. Try again later."
 
@@ -281,6 +482,7 @@ def evaluate_model_output(
         metrics = evaluator.evaluate(reference, candidate)
         
         folder_path = get_or_create_results_folder()
+        print(f"DEBUG: Saving evaluation to folder: {folder_path}")
         
         # Save individual result
         filepath = save_evaluation_result(
@@ -296,6 +498,7 @@ def evaluate_model_output(
                 "timestamp": metrics["timestamp"]
             }
         )
+        print(f"DEBUG: Evaluation result saved to: {filepath}")
         
         # Store for summary
         _evaluation_results.append({
@@ -312,7 +515,13 @@ def evaluate_model_output(
             "metrics": metrics
         }
     except Exception as e:
-        st.error(f"Error during evaluation: {e}")
+        error_msg = f"Error during evaluation: {e}"
+        if STREAMLIT_AVAILABLE:
+            st.error(error_msg)
+        else:
+            print(f"ERROR: {error_msg}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def display_evaluation_metrics(metrics: Dict):

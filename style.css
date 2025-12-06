@@ -1210,6 +1210,13 @@ body {
     flex-wrap: wrap;
 }
 
+.model-selection-row {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+}
+
 .select-wrapper {
     flex: 1;
     position: relative;
@@ -1665,6 +1672,12 @@ body {
 .results-section {
     margin-top: 3rem;
     animation: fadeInUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    z-index: 1;
+}
+
+.results-section[style*="display: none"] {
+    display: none !important;
 }
 
 .result-card {
@@ -1676,10 +1689,30 @@ body {
     padding: 3rem;
     box-shadow: var(--shadow-xl), 0 0 50px rgba(255, 107, 53, 0.3);
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    max-height: 80vh;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     will-change: transform;
     transform: translateZ(0);
+}
+
+/* Custom scrollbar for result card */
+.result-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.result-card::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.result-card::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: 10px;
+}
+
+.result-card::-webkit-scrollbar-thumb:hover {
+    background: var(--gradient-secondary);
 }
 
 .result-card:hover {
@@ -2042,6 +2075,10 @@ body {
     }
 
     .options-row {
+        flex-direction: column;
+    }
+
+    .model-selection-row {
         flex-direction: column;
     }
 

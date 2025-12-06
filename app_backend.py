@@ -11,12 +11,11 @@ import os
 from dotenv import load_dotenv
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend
+CORS(app)  
 
 # Load environment variables
 load_dotenv()
 
-# Global variables for cached resources
 _embedding_model = None
 _faiss_index = None
 _db_connection = None
@@ -57,6 +56,16 @@ def health_check():
     """Health check endpoint."""
     return jsonify({'status': 'healthy', 'message': 'API is running'})
 
+@app.route('/api/models', methods=['GET'])
+def get_available_models():
+    """Get list of available models."""
+    return jsonify({
+        'providers': {
+            'gemini': ['gemini-2.5-flash-preview-09-2025', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+            'groq': utils.GROQ_MODELS
+        }
+    })
+
 @app.route('/api/recipe-name', methods=['POST'])
 def get_recipe_name():
     """Get recipe name from ingredients."""
@@ -64,13 +73,22 @@ def get_recipe_name():
         data = request.json
         ingredients = data.get('ingredients', '')
         language = data.get('language', 'Telugu')
+        provider = data.get('provider', 'gemini')  # 'gemini' or 'groq'
+        model_name = data.get('model_name', None)
         
         if not ingredients:
             return jsonify({'error': 'Ingredients are required'}), 400
         
-        recipe_name = run_async(
-            utils.get_recipe_name_from_ingredients(ingredients, language)
-        )
+        if provider == 'groq':
+            if not model_name:
+                model_name = utils.DEFAULT_GROQ_MODEL
+            recipe_name = run_async(
+                utils.get_recipe_name_from_ingredients_groq(ingredients, language, model_name)
+            )
+        else:
+            recipe_name = run_async(
+                utils.get_recipe_name_from_ingredients(ingredients, language)
+            )
         
         if not recipe_name:
             return jsonify({'error': 'Could not determine recipe from ingredients'}), 400
@@ -88,16 +106,29 @@ def search_internet():
         query = data.get('query', '')
         language = data.get('language', 'Telugu')
         enable_eval = data.get('enable_evaluation', False)
-        model_name = data.get('model_name', 'gemini-2.5-flash')
+        provider = data.get('provider', 'gemini')  # 'gemini' or 'groq'
+        model_name = data.get('model_name', None)
         reference_text = data.get('reference_text', '')
         
         if not query:
             return jsonify({'error': 'Query is required'}), 400
         
-        # Get recipe from internet
-        recipe = run_async(
-            utils.get_gemini_response_with_search(query, language)
-        )
+        # Set default model name if not provided
+        if not model_name:
+            if provider == 'groq':
+                model_name = utils.DEFAULT_GROQ_MODEL
+            else:
+                model_name = 'gemini-2.5-flash'
+        
+        # Get recipe from internet based on provider
+        if provider == 'groq':
+            recipe = run_async(
+                utils.get_groq_response_with_search(query, language, model_name)
+            )
+        else:
+            recipe = run_async(
+                utils.get_gemini_response_with_search(query, language)
+            )
         
         if not recipe or recipe.startswith('Error'):
             return jsonify({'error': recipe or 'Failed to get recipe from internet'}), 500
@@ -106,19 +137,27 @@ def search_internet():
         
         # Evaluate if enabled
         if enable_eval and reference_text:
+            print(f"DEBUG: Evaluation enabled for query: {query}, provider: {provider}, model: {model_name}")
             try:
                 eval_result = utils.evaluate_model_output(
-                    model_name=model_name,
+                    model_name=f"{provider}:{model_name}",
                     query=query,
                     reference=reference_text,
                     candidate=recipe,
                     language=language,
-                    metadata={'source': 'internet'}
+                    metadata={'source': 'internet', 'provider': provider}
                 )
                 if eval_result:
+                    print(f"DEBUG: Evaluation successful, file saved to: {eval_result.get('filepath', 'unknown')}")
                     response_data['metrics'] = eval_result['metrics']
+                else:
+                    print("DEBUG: Evaluation returned None (check logs above for errors)")
             except Exception as e:
-                print(f"Evaluation error: {e}")
+                print(f"ERROR: Evaluation error: {e}")
+                import traceback
+                traceback.print_exc()
+        elif enable_eval and not reference_text:
+            print("DEBUG: Evaluation enabled but no reference text provided")
         
         return jsonify(response_data)
     
@@ -133,11 +172,19 @@ def search_database():
         query = data.get('query', '')
         language = data.get('language', 'Telugu')
         enable_eval = data.get('enable_evaluation', False)
-        model_name = data.get('model_name', 'gemini-2.5-flash')
+        provider = data.get('provider', 'gemini')  # 'gemini' or 'groq'
+        model_name = data.get('model_name', None)
         reference_text = data.get('reference_text', '')
         
         if not query:
             return jsonify({'error': 'Query is required'}), 400
+        
+        # Set default model name if not provided
+        if not model_name:
+            if provider == 'groq':
+                model_name = utils.DEFAULT_GROQ_MODEL
+            else:
+                model_name = 'gemini-2.5-flash'
         
         # Initialize resources
         model, index, db_conn = initialize_resources()
@@ -150,9 +197,14 @@ def search_database():
         
         if not recipe_ids or len(recipe_ids) == 0:
             # Fallback to internet search
-            recipe = run_async(
-                utils.get_gemini_response_with_search(query, language)
-            )
+            if provider == 'groq':
+                recipe = run_async(
+                    utils.get_groq_response_with_search(query, language, model_name)
+                )
+            else:
+                recipe = run_async(
+                    utils.get_gemini_response_with_search(query, language)
+                )
             if not recipe or recipe.startswith('Error'):
                 return jsonify({'error': 'Recipe not found in database or internet'}), 404
             
@@ -160,19 +212,27 @@ def search_database():
             
             # Evaluate if enabled
             if enable_eval and reference_text:
+                print(f"DEBUG: Evaluation enabled for query: {query}, provider: {provider}, model: {model_name}")
                 try:
                     eval_result = utils.evaluate_model_output(
-                        model_name=model_name,
+                        model_name=f"{provider}:{model_name}",
                         query=query,
                         reference=reference_text,
                         candidate=recipe,
                         language=language,
-                        metadata={'source': 'internet_fallback'}
+                        metadata={'source': 'internet_fallback', 'provider': provider}
                     )
                     if eval_result:
+                        print(f"DEBUG: Evaluation successful, file saved to: {eval_result.get('filepath', 'unknown')}")
                         response_data['metrics'] = eval_result['metrics']
+                    else:
+                        print("DEBUG: Evaluation returned None (check logs above for errors)")
                 except Exception as e:
-                    print(f"Evaluation error: {e}")
+                    print(f"ERROR: Evaluation error: {e}")
+                    import traceback
+                    traceback.print_exc()
+            elif enable_eval and not reference_text:
+                print("DEBUG: Evaluation enabled but no reference text provided")
             
             return jsonify(response_data)
         
@@ -183,9 +243,12 @@ def search_database():
         if not recipe_details:
             return jsonify({'error': 'Recipe details not found'}), 404
         
-        # Build prompt and translate
+        # Build prompt and translate based on provider
         prompt = utils.build_rag_prompt(recipe_details, language)
-        recipe = run_async(utils.get_gemini_translation(prompt))
+        if provider == 'groq':
+            recipe = run_async(utils.get_groq_translation(prompt, model_name))
+        else:
+            recipe = run_async(utils.get_gemini_translation(prompt))
         
         if not recipe or recipe.startswith('Error'):
             return jsonify({'error': 'Failed to translate recipe'}), 500
@@ -203,19 +266,26 @@ def search_database():
         # Evaluate if enabled
         if enable_eval:
             eval_reference = reference_text if reference_text else reference_recipe
+            print(f"DEBUG: Evaluation enabled for query: {query}, provider: {provider}, model: {model_name}")
+            print(f"DEBUG: Using reference: {'user-provided' if reference_text else 'database recipe'}")
             try:
                 eval_result = utils.evaluate_model_output(
-                    model_name=model_name,
+                    model_name=f"{provider}:{model_name}",
                     query=query,
                     reference=eval_reference,
                     candidate=recipe,
                     language=language,
-                    metadata={'source': 'database', 'recipe_id': int(recipe_id)}
+                    metadata={'source': 'database', 'recipe_id': int(recipe_id), 'provider': provider}
                 )
                 if eval_result:
+                    print(f"DEBUG: Evaluation successful, file saved to: {eval_result.get('filepath', 'unknown')}")
                     response_data['metrics'] = eval_result['metrics']
+                else:
+                    print("DEBUG: Evaluation returned None (check logs above for errors)")
             except Exception as e:
-                print(f"Evaluation error: {e}")
+                print(f"ERROR: Evaluation error: {e}")
+                import traceback
+                traceback.print_exc()
         
         return jsonify(response_data)
     

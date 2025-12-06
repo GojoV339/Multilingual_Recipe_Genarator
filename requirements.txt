@@ -5,7 +5,12 @@ sentence-transformers
 python-dotenv
 pyarrow
 google-generativeai
+groq
 nltk
 rouge-score
 flask
 flask-cors
+requests
+beautifulsoup4
+matplotlib
+seaborn

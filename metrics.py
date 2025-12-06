@@ -183,8 +183,15 @@ def create_results_folder(base_dir: str = "evaluation_results") -> str:
     folder_name = f"eval_{timestamp}"
     folder_path = os.path.join(base_dir, folder_name)
     
-    os.makedirs(folder_path, exist_ok=True)
-    return folder_path
+    try:
+        os.makedirs(folder_path, exist_ok=True)
+        print(f"SUCCESS: Created evaluation folder: {os.path.abspath(folder_path)}")
+        return folder_path
+    except Exception as e:
+        print(f"ERROR: Failed to create evaluation folder {folder_path}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def save_evaluation_result(
@@ -206,16 +213,27 @@ def save_evaluation_result(
         "metadata": metadata or {}
     }
     
+    # Ensure folder exists
+    os.makedirs(folder_path, exist_ok=True)
+    
     # Create a safe filename from query
     safe_query = "".join(c for c in query[:50] if c.isalnum() or c in (' ', '-', '_')).strip()
     safe_query = safe_query.replace(' ', '_')
     filename = f"{model_name}_{safe_query}_{datetime.now().strftime('%H%M%S')}.json"
+    # Replace colons in model name for filename (Windows compatibility)
+    filename = filename.replace(':', '_')
     filepath = os.path.join(folder_path, filename)
     
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
-    
-    return filepath
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        print(f"SUCCESS: Evaluation file saved to: {filepath}")
+        return filepath
+    except Exception as e:
+        print(f"ERROR: Failed to save evaluation file to {filepath}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def save_summary(folder_path: str, all_results: List[Dict]) -> str:
