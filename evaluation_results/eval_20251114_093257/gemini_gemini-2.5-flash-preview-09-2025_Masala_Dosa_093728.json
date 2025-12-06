@@ -1,0 +1,50 @@
+{
+  "model_name": "gemini:gemini-2.5-flash-preview-09-2025",
+  "query": "Masala Dosa",
+  "reference": "Masala Dosa \n\nIngredients:\n[\"2 cup Rice ; 3 Popato ; 3 Onion; 1/2 Ginger ; tea spoon Jeera ; tea spoon Turmeric ;1 cup Dal ; 2 table-spoon Oil\"]\n\nDirections:\n[\"1. Prepare batter by soaking rice and dal with ratio of 1:1/2 in water overnight.\", \"2. Drained the soaked mixture and grind it until consistency is smooth.\"]",
+  "candidate": "**శీర్షిక (Title):**\nమసాలా దోశ (Masala Dosa)\n\n***\n\n**పదార్థాలు (Ingredients):**\n\n| కొలత (Measurement) | పదార్థం (Item) | తెలుగు పదం (Telugu Name) |\n| :--- | :--- | :--- |\n| 2 కప్పులు | బియ్యం | Biyyam (Rice) |\n| 3 | బంగాళాదుంపలు | Bangālādumplu (Potato) |\n| 3 | ఉల్లిపాయలు | Ullipāyalu (Onion) |\n| 1/2 | అల్లం | Allam (Ginger) |\n| 1 టీ స్పూన్ | జీలకర్ర | Jīrakarra (Jeera) |\n| 1 టీ స్పూన్ | పసుపు | Pasupu (Turmeric) |\n| 1 కప్పు | పప్పు (మినపప్పు లేదా కందిపప్పు) | Pappu (Dal) |\n| 2 టేబుల్ స్పూన్లు | నూనె | Nūne (Oil) |\n\n***\n\n**తయారీ విధానం (Directions):**\n\n1. బియ్యం మరియు పప్పును 1:1/2 నిష్పత్తిలో తీసుకుని, రాత్రంతా నీటిలో నానబెట్టడం ద్వారా దోశ పిండిని సిద్ధం చేయండి. (Biyyam mariyu pappunu 1:1/2 niṣpattilō tīsukunni, rātrantā nīṭilō nānabettadam dvārā dōśa piṇḍini siddhaṁ cēyaṇḍi.)\n2. నానబెట్టిన మిశ్రమాన్ని నీరు వడకట్టి, అది మెత్తగా, నునుపుగా (smooth) అయ్యే వరకు గ్రైండ్‌ చేయండి/రుబ్బండి. (Nānabettiṇa miśramānni nīru vaḍakaṭṭi, adi mettagā, nunupugā ayyē varaku grind cēyaṇḍi/rubbaṇḍi.)",
+  "metrics": {
+    "timestamp": "2025-11-14T09:37:28.178990",
+    "bleu_scores": {
+      "bleu": 0.045871559633027525,
+      "bleu_1": 0.045871559633027525,
+      "bleu_2": 0.045871559633027525,
+      "bleu_3": 0.045871559633027525,
+      "bleu_4": 0.045871559633027525
+    },
+    "rouge_scores": {
+      "rouge1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rouge2": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rougeL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      }
+    },
+    "semantic_similarity": 0.4925954043865204,
+    "length_metrics": {
+      "reference_length_words": 57,
+      "candidate_length_words": 160,
+      "reference_length_chars": 318,
+      "candidate_length_chars": 995,
+      "length_ratio": 2.807017543859649,
+      "char_ratio": 3.1289308176100628
+    },
+    "overall_score": 0.21079962964451643
+  },
+  "metadata": {
+    "source": "database",
+    "recipe_id": 1295225,
+    "provider": "gemini",
+    "language": "Telugu",
+    "timestamp": "2025-11-14T09:37:28.178990"
+  }
+}

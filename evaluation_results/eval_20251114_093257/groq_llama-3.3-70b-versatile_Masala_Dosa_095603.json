@@ -1,0 +1,50 @@
+{
+  "model_name": "groq:llama-3.3-70b-versatile",
+  "query": "Masala Dosa",
+  "reference": "Masala Dosa \n\nIngredients:\n[\"2 cup Rice ; 3 Popato ; 3 Onion; 1/2 Ginger ; tea spoon Jeera ; tea spoon Turmeric ;1 cup Dal ; 2 table-spoon Oil\"]\n\nDirections:\n[\"1. Prepare batter by soaking rice and dal with ratio of 1:1/2 in water overnight.\", \"2. Drained the soaked mixture and grind it until consistency is smooth.\"]",
+  "candidate": "**शीर्षक:** मसाला डोसा \n\n**सामग्री:**\n- २ कप चावल ; ३ आलू ; ३ प्याज; १/२ अदरक ; चाय का चम्मच जीरा ; चाय का चम्मच हल्दी ; १ कप दाल ; २ बड़े चम्मच तेल\n\n**निर्देश:**\n१.१. चावल और दाल को १:१/२ के अनुपात में पानी में रात भर भिगो कर बैटर तैयार करें।\n२.२. भिगोए हुए मिश्रण को छान लें और इसे तब तक पीसें जब तक कि यह चिकना न हो जाए।",
+  "metrics": {
+    "timestamp": "2025-11-14T09:56:02.999378",
+    "bleu_scores": {
+      "bleu": 0.017857142857142856,
+      "bleu_1": 0.017857142857142856,
+      "bleu_2": 0.017857142857142856,
+      "bleu_3": 0.017857142857142856,
+      "bleu_4": 0.017857142857142856
+    },
+    "rouge_scores": {
+      "rouge1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rouge2": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rougeL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      }
+    },
+    "semantic_similarity": 0.21120639145374298,
+    "length_metrics": {
+      "reference_length_words": 57,
+      "candidate_length_words": 74,
+      "reference_length_chars": 318,
+      "candidate_length_chars": 323,
+      "length_ratio": 1.2982456140350878,
+      "char_ratio": 1.0157232704402517
+    },
+    "overall_score": 0.08983969943864005
+  },
+  "metadata": {
+    "source": "database",
+    "recipe_id": 1295225,
+    "provider": "groq",
+    "language": "Hindi",
+    "timestamp": "2025-11-14T09:56:02.999378"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "model_name": "groq:llama-3.3-70b-versatile",
+  "query": "Masala Dosa",
+  "reference": "Masala Dosa \n\nIngredients:\n[\"2 cup Rice ; 3 Popato ; 3 Onion; 1/2 Ginger ; tea spoon Jeera ; tea spoon Turmeric ;1 cup Dal ; 2 table-spoon Oil\"]\n\nDirections:\n[\"1. Prepare batter by soaking rice and dal with ratio of 1:1/2 in water overnight.\", \"2. Drained the soaked mixture and grind it until consistency is smooth.\"]",
+  "candidate": "**శీర్షిక:** మసాలా దోస \n\n**పదార్థాలు:**\n- 2 కప్పు బియ్యం ; 3 బంగాళదుంపలు ; 3 ఉళ్ళిపాయలు; 1/2 అల్లం ; టీ స్పూన్ జీరా ; టీ స్పూన్ పసుపు ;1 కప్పు పప్పు ; 2 టేబల్ స్పూన్ల నూనె\n\n**తయారీ విధానం:**\n1. 1. బియ్యం, పప్పును 1:1/2 నిష్పత్తిలో రాత్రికి నీటిలో నానబెట్టి, బ్యాటర్‌ను తయారు చేయండి.\n2. 2. నానబెట్టిన మిశ్రమాన్ని వడకట్టి, సరిగ్గా మరియు మృదువుగా ఉండే వరకు అరగకట్టండి.",
+  "metrics": {
+    "timestamp": "2025-11-14T09:50:18.327497",
+    "bleu_scores": {
+      "bleu": 0.13043478260869565,
+      "bleu_1": 0.13043478260869565,
+      "bleu_2": 0.13043478260869565,
+      "bleu_3": 0.13043478260869565,
+      "bleu_4": 0.13043478260869565
+    },
+    "rouge_scores": {
+      "rouge1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rouge2": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rougeL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      }
+    },
+    "semantic_similarity": 0.12437072396278381,
+    "length_metrics": {
+      "reference_length_words": 57,
+      "candidate_length_words": 57,
+      "reference_length_chars": 318,
+      "candidate_length_chars": 365,
+      "length_ratio": 1.0,
+      "char_ratio": 1.1477987421383649
+    },
+    "overall_score": 0.08887872436772222
+  },
+  "metadata": {
+    "source": "database",
+    "recipe_id": 1295225,
+    "provider": "groq",
+    "language": "Telugu",
+    "timestamp": "2025-11-14T09:50:18.327497"
+  }
+}

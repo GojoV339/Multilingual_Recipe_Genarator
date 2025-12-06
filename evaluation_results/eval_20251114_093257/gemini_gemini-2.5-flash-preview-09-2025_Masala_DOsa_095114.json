@@ -1,0 +1,50 @@
+{
+  "model_name": "gemini:gemini-2.5-flash-preview-09-2025",
+  "query": "Masala DOsa",
+  "reference": "Masala Dosa \n\nIngredients:\n[\"2 cup Rice ; 3 Popato ; 3 Onion; 1/2 Ginger ; tea spoon Jeera ; tea spoon Turmeric ;1 cup Dal ; 2 table-spoon Oil\"]\n\nDirections:\n[\"1. Prepare batter by soaking rice and dal with ratio of 1:1/2 in water overnight.\", \"2. Drained the soaked mixture and grind it until consistency is smooth.\"]",
+  "candidate": "**शीर्षक (Title):** मसाला डोसा (Masala Dosa)\n\n---\n\n**सामग्री (Ingredients):**\n\n*   चावल (Rice): 2 कप\n*   आलू (Potato): 3\n*   प्याज (Onion): 3\n*   अदरक (Ginger): 1/2\n*   जीरा (Jeera/Cumin): 1 छोटा चम्मच (tea spoon)\n*   हल्दी (Turmeric): 1 छोटा चम्मच (tea spoon)\n*   दाल (Lentils): 1 कप\n*   तेल (Oil): 2 टेबल-स्पून (बड़ा चम्मच)\n\n---\n\n**निर्देश (Directions):**\n\n1.  चावल और दाल को 1:1/2 के अनुपात में पानी में रात भर भिगोकर घोल (बैटर) तैयार करें।\n2.  भीगे हुए मिश्रण का पानी निकाल दें और इसे तब तक पीसें जब तक कि यह पूरी तरह से चिकना (smooth) न हो जाए।",
+  "metrics": {
+    "timestamp": "2025-11-14T09:51:14.237577",
+    "bleu_scores": {
+      "bleu": 0.05194805194805195,
+      "bleu_1": 0.05194805194805195,
+      "bleu_2": 0.05194805194805195,
+      "bleu_3": 0.05194805194805195,
+      "bleu_4": 0.05194805194805195
+    },
+    "rouge_scores": {
+      "rouge1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rouge2": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rougeL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      }
+    },
+    "semantic_similarity": 0.46063631772994995,
+    "length_metrics": {
+      "reference_length_words": 57,
+      "candidate_length_words": 100,
+      "reference_length_chars": 318,
+      "candidate_length_chars": 549,
+      "length_ratio": 1.7543859649122806,
+      "char_ratio": 1.7264150943396226
+    },
+    "overall_score": 0.19983894267639557
+  },
+  "metadata": {
+    "source": "database",
+    "recipe_id": 1295225,
+    "provider": "gemini",
+    "language": "Hindi",
+    "timestamp": "2025-11-14T09:51:14.237577"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "model_name": "gemini:gemini-1.5-pro",
+  "query": "Masala Dosa",
+  "reference": "Masala Dosa \n\nIngredients:\n[\"2 cup Rice ; 3 Popato ; 3 Onion; 1/2 Ginger ; tea spoon Jeera ; tea spoon Turmeric ;1 cup Dal ; 2 table-spoon Oil\"]\n\nDirections:\n[\"1. Prepare batter by soaking rice and dal with ratio of 1:1/2 in water overnight.\", \"2. Drained the soaked mixture and grind it until consistency is smooth.\"]",
+  "candidate": "## మసాలా దోశ (Masālā Dōśa)\n\n### కావలసిన పదార్థాలు (Kāvalasina Padārthālu - Ingredients)\n\n*   బియ్యం (Rice): 2 కప్పులు\n*   బంగాళాదుంపలు (Potato): 3\n*   ఉల్లిపాయలు (Onion): 3\n*   అల్లం (Ginger): 1/2 (సగం ముక్క)\n*   జీలకర్ర (Jeera): 1 టీ స్పూన్\n*   పసుపు (Turmeric): 1 టీ స్పూన్\n*   పప్పు (Dal - సాధారణంగా మినప్పప్పు): 1 కప్పు\n*   నూనె (Oil): 2 టేబుల్ స్పూన్లు\n\n---\n\n### తయారీ విధానం (Tayārī Vidhānam - Directions)\n\n1.  1:1/2 నిష్పత్తిలో బియ్యం మరియు పప్పును తీసుకొని, రాత్రంతా నీటిలో నానబెట్టి, దోశ పిండిని సిద్ధం చేసుకోండి.\n2.  నానిన మిశ్రమాన్ని నీరు వడకట్టి, నున్నని అనుగుణ్యత వచ్చేవరకు మెత్తగా రుబ్బుకోవాలి.",
+  "metrics": {
+    "timestamp": "2025-11-14T09:45:00.480678",
+    "bleu_scores": {
+      "bleu": 0.056338028169014086,
+      "bleu_1": 0.056338028169014086,
+      "bleu_2": 0.056338028169014086,
+      "bleu_3": 0.056338028169014086,
+      "bleu_4": 0.056338028169014086
+    },
+    "rouge_scores": {
+      "rouge1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rouge2": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      },
+      "rougeL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "fmeasure": 0.0
+      }
+    },
+    "semantic_similarity": 0.6369707584381104,
+    "length_metrics": {
+      "reference_length_words": 57,
+      "candidate_length_words": 89,
+      "reference_length_chars": 318,
+      "candidate_length_chars": 608,
+      "length_ratio": 1.5614035087719298,
+      "char_ratio": 1.9119496855345912
+    },
+    "overall_score": 0.27168971182594837
+  },
+  "metadata": {
+    "source": "database",
+    "recipe_id": 1295225,
+    "provider": "gemini",
+    "language": "Telugu",
+    "timestamp": "2025-11-14T09:45:00.480678"
+  }
+}
